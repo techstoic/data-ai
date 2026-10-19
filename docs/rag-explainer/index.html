@@ -1,0 +1,332 @@
+<!doctype html>
+<!-- RAG Explainer v1.1.0 | Authored by Vijaya Chander with AI assistance -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG, Step by Step</title>
+<style>
+:root{--blue:#4285F4;--red:#EA4335;--yellow:#FBBC04;--green:#34A853;--navy:#1F3864;
+  --off:#F8F9FA;--lg:#E8EAED;--mg:#9AA0A6;--dg:#3C4043;--blk:#202124}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--dg);font:15px/1.5 "Google Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:24px 16px 96px}
+h1{font-size:25px;color:var(--navy);margin:0 0 2px}
+.sub{color:var(--mg);margin:0 0 14px;font-size:13px}
+.progress{display:flex;gap:6px;margin-bottom:18px}
+.progress span{flex:1;height:4px;border-radius:2px;background:var(--lg);cursor:pointer}
+.progress span.on{background:var(--navy)}
+.scene{display:none}.scene.active{display:block}
+.scene h2{font-size:20px;color:var(--navy);margin:0 0 4px}
+.lead{margin:0 0 14px}
+.stage{background:var(--off);border:1px solid var(--lg);border-radius:12px;padding:18px;min-height:340px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.actor{width:96px;text-align:center;font-weight:600;color:var(--navy)}
+.actor small{font-weight:400;color:var(--mg)}
+.bubble{background:#fff;border:1px solid var(--lg);border-radius:14px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.bubble.a{border-color:var(--navy)}
+.stamp{font-weight:700;font-size:12px;padding:4px 10px;border-radius:4px;letter-spacing:.03em}
+.stamp.bad{color:var(--red);border:2px solid var(--red);transform:rotate(-4deg)}
+.stamp.good{color:var(--green);border:2px solid var(--green);transform:rotate(-4deg)}
+.card{background:#fff;border-left:3px solid var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.14);border-radius:6px;padding:8px 12px;font-size:14px}
+.card b{color:var(--navy)}
+.card.dim{border-left-color:var(--mg);opacity:.55}
+.prompt{background:#fff;border:2px dashed var(--navy);border-radius:10px;padding:12px;display:grid;gap:8px}
+.prompt .tag{font-size:11px;font-weight:700;color:var(--mg);letter-spacing:.06em}
+.note{color:var(--dg);font-size:13px;margin:10px 0 0}
+.takeaway{margin-top:14px;padding:10px 14px;border-left:3px solid var(--green);background:#E6F4EA;border-radius:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.chunks{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
+.manual{background:#fff;border:1px solid var(--lg);border-radius:6px;padding:12px;font-size:13px}
+.play .manual.split{animation:fade 1s 1s both}
+@keyframes fade{to{opacity:.25}}
+.pages{display:flex;flex-wrap:wrap;gap:2px;font-size:18px;max-width:300px}
+.meter{height:22px;background:#fff;border:1px solid var(--lg);border-radius:11px;overflow:hidden}
+.meter .fill{height:100%;width:0;background:var(--navy)}
+.play .meter .fill{animation:fill 2.6s .3s forwards}
+@keyframes fill{70%{background:var(--navy)}100%{width:100%;background:var(--red)}}
+.big{font-size:22px;font-weight:700;color:var(--navy)}
+code,.vec{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--navy)}
+svg{width:100%;max-width:420px;height:auto;display:block;margin:0 auto;background:#fff;border:1px solid var(--lg);border-radius:8px}
+svg text{font-family:inherit;font-size:10px;fill:var(--dg)}
+svg .pop,svg .drop{transform-box:fill-box;transform-origin:center}
+svg .axis{stroke:var(--mg);stroke-width:1}
+svg .dot{fill:var(--navy)}
+svg .qdot{fill:var(--blue)}
+svg .near{stroke:var(--navy);stroke-width:2.5}
+svg .far{stroke:var(--mg);stroke-width:1;stroke-dasharray:3 3}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.controls input{flex:1;min-width:200px;font:inherit;padding:8px 10px;border:1px solid var(--mg);border-radius:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{font-size:12px;padding:4px 10px;border:1px solid var(--lg);border-radius:12px;background:#fff;cursor:pointer;color:var(--dg)}
+.ranked{display:grid;gap:6px}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.flow .card{font-size:13px}
+.flow .arr{color:var(--navy);font-weight:700}
+.flow-label{font-size:12px;font-weight:700;color:var(--mg);letter-spacing:.05em}
+#answer{min-height:90px;font-size:15px}
+.cursor::after{content:"▍";color:var(--navy);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+button{font:inherit;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:6px;padding:8px 18px;cursor:pointer}
+button.primary{background:var(--navy);color:#fff}
+button:disabled{opacity:.35;cursor:default}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--lg);display:flex;justify-content:center;align-items:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.nav .count{color:var(--mg);font-size:12px;min-width:60px;text-align:center}
+/* Animation engine: elements animate when their scene gets the .play class */
+.pop{opacity:0}
+.play .pop{animation:pop .5s var(--d,0s) both}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.92)}to{opacity:1;transform:none}}
+.play .fly{animation:fly .8s var(--d,0s) both}
+@keyframes fly{from{opacity:0;transform:translateX(-160px)}to{opacity:1;transform:none}}
+.play .drop{animation:drop .8s var(--d,0s) cubic-bezier(.3,1.4,.6,1) both}
+@keyframes drop{from{opacity:0;transform:translateY(-220px)}to{opacity:1;transform:none}}
+.play .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .6s var(--d,0s) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.play *{animation-duration:.01s!important;animation-delay:0s!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>RAG, Step by Step</h1>
+<p class="sub">Retrieval-Augmented Generation, built from the bottom up. Use the arrow keys or the buttons. Toy ES300h manual: the numbers are illustrative, so check your real manual.</p>
+<div class="progress" id="progress"></div>
+
+<section class="scene">
+<h2>1. An LLM is a closed-book student</h2>
+<p class="lead">It read a huge library once. Then its memory froze. It never saw your owner's manual.</p>
+<div class="stage">
+  <div class="row"><div class="actor pop">🙋 You</div>
+    <div class="bubble pop" style="--d:.4s">What tire pressure does my ES300h need?</div></div>
+  <div class="row"><div class="actor pop" style="--d:1.2s">🧠 LLM<br><small>📕 book closed</small></div>
+    <div class="bubble a pop" style="--d:2s">Use 32 psi.</div>
+    <div class="stamp bad pop" style="--d:2.8s">GUESS: NOT FROM YOUR MANUAL</div></div>
+  <p class="note pop" style="--d:3.6s">The answer sounds confident, but it can be wrong. This is called a <b>hallucination</b>.</p>
+</div>
+</section>
+
+<section class="scene">
+<h2>2. Fix: make it an open-book exam</h2>
+<p class="lead">Paste the right page into the prompt, before the question. Now the model reads. It does not guess.</p>
+<div class="stage">
+  <div class="prompt pop"><div class="tag">PROMPT SENT TO THE LLM</div>
+    <div class="card fly" style="--d:.5s">📄 <b>Manual p.412:</b> Front and rear tire pressure: 36 psi, checked cold.</div>
+    <div class="pop" style="--d:1.3s"><b>Question:</b> What tire pressure does my ES300h need?</div></div>
+  <div class="row" style="margin-top:14px"><div class="actor pop" style="--d:2s">🧠 LLM<br><small>📖 book open</small></div>
+    <div class="bubble a pop" style="--d:2.6s">36 psi, checked cold (p.412).</div>
+    <div class="stamp good pop" style="--d:3.2s">GROUNDED: READ FROM THE PAGE</div></div>
+  <div class="takeaway pop" style="--d:3.9s"><b>A + G</b> in RAG: <b>augment</b> the prompt with the page, then <b>generate</b> the answer.</div>
+</div>
+</section>
+
+<section class="scene">
+<h2>3. Problem: you cannot paste the whole library</h2>
+<p class="lead">The manual has 600 pages. A prompt has a size limit, and every word costs money and time.</p>
+<div class="stage grid2">
+  <div><div class="big pop">📚 600 pages</div><div class="pages" id="pages"></div></div>
+  <div><p class="pop" style="--d:.2s"><b>Prompt capacity</b></p><div class="meter pop" style="--d:.2s"><div class="fill"></div></div>
+    <p class="stamp bad pop" style="--d:3s;display:inline-block;margin-top:14px">OVERFLOW: TOO BIG, TOO SLOW, TOO EXPENSIVE</p>
+    <div class="takeaway pop" style="--d:3.8s">You only need the 1 to 3 paragraphs that matter. A search finds them. That search is the <b>R</b>: <b>Retrieval</b>.</div></div>
+</div>
+</section>
+
+<section class="scene">
+<h2>4. Cut the manual into chunks</h2>
+<p class="lead">Split the text into small pieces. Each piece covers one idea. These pieces are called <b>chunks</b>.</p>
+<div class="stage">
+  <div class="manual split pop" id="manualText"></div>
+  <div class="chunks" id="chunkGrid"></div>
+  <p class="note pop" style="--d:3s">Real systems use chunks of about 200 to 800 words, often with a small overlap so ideas do not get cut in half.</p>
+</div>
+</section>
+
+<section class="scene">
+<h2>5. Turn each chunk into a point on a map of meaning</h2>
+<p class="lead">An <b>embedding model</b> turns text into a list of numbers. Use the numbers as coordinates. Text with similar meaning lands close together.</p>
+<div class="stage grid2">
+  <div class="ranked" id="vecList"></div>
+  <div><div id="map5"></div>
+    <p class="note pop" style="--d:3.6s">Tires and rotation sit close together. Bluetooth is far away. Real embeddings have hundreds to thousands of dimensions. We draw 2 so you can see them. A <b>vector database</b> stores these points.</p></div>
+</div>
+</section>
+
+<section class="scene">
+<h2>6. Your question becomes a point too, then find the nearest</h2>
+<p class="lead">The question goes through the same embedding model. It lands on the same map. The closest chunks are the most relevant ones.</p>
+<div class="stage">
+  <div class="controls"><input id="q" value="How much air should my tires have?" aria-label="Your question">
+    <button class="primary" id="go">Embed &amp; search</button></div>
+  <div class="chips" id="chips"></div>
+  <div class="grid2"><div id="map6"></div><div><div class="ranked" id="ranked"></div><p class="note" id="embedNote"></p></div></div>
+</div>
+</section>
+
+<section class="scene">
+<h2>7. Augment: paste the top 3 chunks into the prompt</h2>
+<p class="lead">Only the winners go in. The prompt is now small, cheap, and full of the right facts.</p>
+<div class="stage" id="promptBuild"></div>
+</section>
+
+<section class="scene">
+<h2>8. Generate: the LLM answers from the sources</h2>
+<p class="lead">The model reads the pasted chunks, writes the answer, and cites the page so you can check it.</p>
+<div class="stage">
+  <div class="card" id="answer"></div>
+  <p class="note" id="answerNote"></p>
+  <h2 style="margin-top:20px">The whole pipeline</h2>
+  <div class="flow-label pop" style="--d:.3s">ONCE, OFFLINE</div>
+  <div class="flow pop" style="--d:.5s"><div class="card">📄 Chunk</div><span class="arr">→</span><div class="card">🔢 Embed</div><span class="arr">→</span><div class="card">🗄️ Store in vector DB</div></div>
+  <div class="flow-label pop" style="--d:1s">EVERY QUESTION</div>
+  <div class="flow pop" style="--d:1.2s"><div class="card">❓ Embed question</div><span class="arr">→</span><div class="card">📍 Find nearest</div><span class="arr">→</span><div class="card">📋 Paste into prompt</div><span class="arr">→</span><div class="card">🧠 LLM answers</div></div>
+</div>
+</section>
+</div>
+
+<div class="nav"><button id="back">← Back</button><span class="count" id="count"></span><button class="primary" id="next">Next →</button></div>
+
+<script>
+// Toy manual: 6 chunks with hand-placed 2D "embeddings" (x ≈ electrical, y ≈ wheels & road)
+const CHUNKS = [
+  {id:"A", label:"Tire pressure",    page:412, x:1.5, y:8.5, text:"Front and rear tire pressure: 36 psi, checked cold."},
+  {id:"B", label:"Tire rotation",    page:415, x:2.5, y:7.5, text:"Rotate the tires every 5,000 miles."},
+  {id:"C", label:"Regen braking",    page:230, x:6.0, y:6.5, text:"Regenerative braking recharges the hybrid battery."},
+  {id:"D", label:"Battery warranty", page:18,  x:8.5, y:4.0, text:"Hybrid battery warranty: 10 years or 150,000 miles."},
+  {id:"E", label:"Bluetooth",        page:301, x:8.0, y:1.5, text:"Pair your phone in Setup, then Bluetooth."},
+  {id:"F", label:"Oil change",       page:420, x:2.0, y:4.0, text:"Change the engine oil every 10,000 miles. Use 0W-16."}
+];
+// Toy embedder: known words point at a chunk's location. Real embedders are neural networks.
+const KEYWORDS = {
+  tire:"A", tires:"A", tyre:"A", psi:"A", pressure:"A", air:"A", inflate:"A", wheel:"A", wheels:"A",
+  rotate:"B", rotation:"B", rotating:"B",
+  brake:"C", brakes:"C", braking:"C", regenerative:"C", regen:"C",
+  battery:"D", hybrid:"D", warranty:"D", charge:"D", charging:"D",
+  bluetooth:"E", phone:"E", audio:"E", radio:"E", music:"E", pair:"E", connect:"E", carplay:"E",
+  oil:"F", engine:"F", lubricant:"F"
+};
+const EXAMPLES = ["How much air should my tires have?", "Is the hybrid battery under warranty?",
+  "How do I connect my phone?", "What oil does the engine take?", "Best pizza near me?"];
+const TOP_K = 3, TYPE_MS = 28;
+const byId = Object.fromEntries(CHUNKS.map(c => [c.id, c]));
+const state = {query:"", hits:[], vec:{x:5, y:5}, ranked:[], searched:false};
+let typer = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const fmt = v => `[${v.x.toFixed(1)}, ${v.y.toFixed(1)}]`;
+const sx = v => 40 + v * 34, sy = v => 380 - v * 34;
+
+function embed(text) {
+  const hits = (text.toLowerCase().match(/[a-z0-9]+/g) || []).filter(w => KEYWORDS[w]);
+  if (!hits.length) return {hits, vec:{x:5, y:5}};
+  const pts = hits.map(w => byId[KEYWORDS[w]]);
+  const avg = k => pts.reduce((s, p) => s + p[k], 0) / pts.length;
+  return {hits, vec:{x:avg("x"), y:avg("y")}};
+}
+
+function mapSvg({dotClass = "", dotDelay = () => 0, query = null}) {
+  let s = `<svg viewBox="0 0 420 420" role="img" aria-label="2D map of chunk embeddings">
+    <line class="axis" x1="40" y1="380" x2="400" y2="380"/><line class="axis" x1="40" y1="380" x2="40" y2="20"/>
+    <text x="250" y="402">→ more electrical / hybrid</text>
+    <text x="46" y="16">↑ more about wheels &amp; road</text>`;
+  if (query) query.ranked.forEach((r, i) => {
+    const cls = i < TOP_K ? "near" : "far";
+    s += `<line class="${cls} draw" pathLength="1" style="--d:${0.9 + i * 0.12}s" x1="${sx(query.vec.x)}" y1="${sy(query.vec.y)}" x2="${sx(r.c.x)}" y2="${sy(r.c.y)}"/>`;
+  });
+  CHUNKS.forEach((c, i) => {
+    s += `<g class="${dotClass}" style="--d:${dotDelay(i)}s"><circle class="dot" cx="${sx(c.x)}" cy="${sy(c.y)}" r="7"/>
+      <text x="${sx(c.x) + 11}" y="${sy(c.y) + 4}">${c.id}: ${c.label}</text></g>`;
+  });
+  if (query) s += `<g class="drop"><circle class="qdot" cx="${sx(query.vec.x)}" cy="${sy(query.vec.y)}" r="9"/>
+      <text x="${sx(query.vec.x) - 30}" y="${sy(query.vec.y) - 14}" style="fill:var(--blue);font-weight:700">your question</text></g>`;
+  return s + "</svg>";
+}
+
+function chunkCard(c, extra = "", cls = "card pop", d = 0) {
+  return `<div class="${cls}" style="--d:${d}s"><b>Chunk ${c.id}</b> · p.${c.page}${extra}<br>${c.text}</div>`;
+}
+
+function search() {
+  state.query = $("q").value.trim() || EXAMPLES[0];
+  const {hits, vec} = embed(state.query);
+  state.hits = hits; state.vec = vec; state.searched = true;
+  state.ranked = CHUNKS.map(c => ({c, d:Math.hypot(c.x - vec.x, c.y - vec.y)})).sort((a, b) => a.d - b.d);
+  $("map6").innerHTML = mapSvg({query:state});
+  $("ranked").innerHTML = state.ranked.map((r, i) => chunkCard(r.c, `, distance <code>${r.d.toFixed(2)}</code>`,
+    i < TOP_K ? "card pop" : "card dim pop", 1.6 + i * 0.15).replace("<b>", `<b>#${i + 1} `)).join("");
+  $("embedNote").innerHTML = hits.length
+    ? `Toy embedder matched <b>${esc(hits.join(", "))}</b>, so the vector is <code>${fmt(vec)}</code>. A real embedder is a neural network. It understands synonyms without a word list.`
+    : `No known words, so the toy embedder puts the question in the middle <code>${fmt(vec)}</code>. Even the nearest chunks are a weak match. This is a real RAG failure mode: search always returns something, even when nothing is relevant.`;
+  replay(scenes[5]);
+}
+
+const hooks = {
+  2() { $("pages").innerHTML = Array.from({length:60}, (_, i) => `<span class="pop" style="--d:${i * 0.04}s">📄</span>`).join(""); },
+  3() {
+    $("manualText").innerHTML = "<b>Owner's manual (excerpt):</b> " + CHUNKS.map(c => c.text).join(" ");
+    $("chunkGrid").innerHTML = CHUNKS.map((c, i) => chunkCard(c, "", "card pop", 1.2 + i * 0.25)).join("");
+  },
+  4() {
+    $("vecList").innerHTML = CHUNKS.map((c, i) =>
+      `<div class="card fly" style="--d:${i * 0.45}s"><b>${c.id}: ${c.label}</b> → <span class="vec">${fmt(c)}</span></div>`).join("");
+    $("map5").innerHTML = mapSvg({dotClass:"pop", dotDelay:i => i * 0.45 + 0.35});
+  },
+  5() { if (!state.searched) search(); },
+  6() {
+    if (!state.searched) search();
+    const top = state.ranked.slice(0, TOP_K);
+    $("promptBuild").innerHTML = `<div class="prompt"><div class="tag">PROMPT SENT TO THE LLM</div>
+      <div class="pop" style="--d:.2s"><b>Instructions:</b> Answer only from the sources below. Cite the page. If the sources do not cover it, say so.</div>
+      ${top.map((r, i) => chunkCard(r.c, `, distance ${r.d.toFixed(2)}`, "card fly", 0.7 + i * 0.5)).join("")}
+      <div class="pop" style="--d:2.4s"><b>Question:</b> ${esc(state.query)}</div></div>
+      <p class="note pop" style="--d:3s">About 60 words, instead of 600 pages. The other ${CHUNKS.length - TOP_K} chunks stay out.</p>`;
+  },
+  7() {
+    if (!state.searched) search();
+    const best = state.ranked[0].c;
+    const text = state.hits.length
+      ? `Based on your manual: ${best.text} [p.${best.page}]`
+      : "I cannot find this in the retrieved sources, so I will not guess.";
+    $("answerNote").textContent = state.hits.length
+      ? "A real LLM writes in its own words and can combine several chunks. This demo quotes the best match, so the mechanism stays visible."
+      : "The instruction \"if the sources do not cover it, say so\" stops the model from guessing. This is the main defense against hallucination in RAG.";
+    const el = $("answer"); el.textContent = ""; el.classList.add("cursor");
+    let i = 0;
+    typer = setInterval(() => {
+      el.textContent = "🧠 " + text.slice(0, ++i);
+      if (i >= text.length) { clearInterval(typer); el.classList.remove("cursor"); }
+    }, TYPE_MS);
+  }
+};
+
+const scenes = [...document.querySelectorAll(".scene")];
+let cur = 0;
+function replay(el) { el.classList.remove("play"); void el.offsetWidth; el.classList.add("play"); }
+function show(i) {
+  cur = Math.max(0, Math.min(scenes.length - 1, i));
+  clearInterval(typer);
+  scenes.forEach((s, k) => s.classList.toggle("active", k === cur));
+  [...$("progress").children].forEach((p, k) => p.classList.toggle("on", k <= cur));
+  $("count").textContent = `${cur + 1} / ${scenes.length}`;
+  $("back").disabled = cur === 0; $("next").disabled = cur === scenes.length - 1;
+  if (hooks[cur]) hooks[cur]();
+  replay(scenes[cur]);
+  window.scrollTo({top:0});
+}
+
+$("progress").innerHTML = scenes.map((_, k) => `<span title="Step ${k + 1}" data-k="${k}"></span>`).join("");
+$("progress").addEventListener("click", e => { if (e.target.dataset.k) show(+e.target.dataset.k); });
+$("chips").innerHTML = EXAMPLES.map(t => `<button class="chip">${esc(t)}</button>`).join("");
+$("chips").addEventListener("click", e => { if (e.target.matches(".chip")) { $("q").value = e.target.textContent; search(); } });
+$("go").addEventListener("click", search);
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+$("back").addEventListener("click", () => show(cur - 1));
+$("next").addEventListener("click", () => show(cur + 1));
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") show(cur + 1);
+  if (e.key === "ArrowLeft") show(cur - 1);
+});
+show(0);
+</script>
+</body>
+</html>
